@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from crewai import LLM
 from crewai.flow.flow import Flow, listen, start
 from guide_creator_flow.crews.content_crew.content_crew import ContentCrew
+from guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
 
 # Define our models for structured data
 class Section(BaseModel):
@@ -193,10 +194,23 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
 
 def kickoff():
     """Run the guide creator flow"""
-    GuideCreatorFlow().kickoff()
-    print("\n=== Flow Complete ===")
-    print("Your comprehensive guide is ready in the output directory.")
-    print("Open output/complete_guide.md to view it.")
+    # Setup Phoenix observability
+    phoenix_enabled = setup_phoenix_observability()
+    
+    try:
+        GuideCreatorFlow().kickoff()
+        print("\n=== Flow Complete ===")
+        print("Your comprehensive guide is ready in the output directory.")
+        print("Open output/complete_guide.md to view it.")
+        
+        if phoenix_enabled:
+            print("\n🔍 Check your Phoenix dashboard for observability data:")
+            print("   https://app.phoenix.arize.com")
+            
+    finally:
+        # Cleanup Phoenix instrumentation
+        if phoenix_enabled:
+            cleanup_phoenix()
 
 def plot():
     """Generate a visualization of the flow"""

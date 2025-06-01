@@ -1,10 +1,18 @@
-# {{crew_name}} Crew
+# AI Guide Creator
 
-Welcome to the {{crew_name}} Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+An AI-powered guide creation system using CrewAI that generates comprehensive, well-structured guides on any topic with proper markdown formatting and observability through Arize Phoenix.
+
+## Features
+
+- 🤖 **AI-Powered Content Generation**: Uses CrewAI with content writer and reviewer agents
+- 📝 **Clean Markdown Output**: Properly formatted guides with correct heading hierarchy
+- 🔍 **Observability**: Integrated with Arize Phoenix for monitoring and debugging
+- 🎯 **Audience-Specific**: Supports beginner, intermediate, and advanced content levels
+- 📊 **Structured Process**: Outline creation → Content writing → Review → Compilation
 
 ## Installation
 
-Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management.
 
 First, if you haven't already, install uv:
 
@@ -14,43 +22,84 @@ pip install uv
 
 Next, navigate to your project directory and install the dependencies:
 
-(Optional) Lock the dependencies and install them by using the CLI command:
 ```bash
 crewai install
 ```
 
-### Customizing
+## Configuration
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+### Required: OpenAI API Key
 
-- Modify `src/guide_creator_flow/config/agents.yaml` to define your agents
-- Modify `src/guide_creator_flow/config/tasks.yaml` to define your tasks
-- Modify `src/guide_creator_flow/crew.py` to add your own logic, tools and specific args
-- Modify `src/guide_creator_flow/main.py` to add custom inputs for your agents and tasks
+Add your OpenAI API key to a `.env` file:
+
+```bash
+cp env.example .env
+# Edit .env and add your OPENAI_API_KEY
+```
+
+### Optional: Phoenix Observability
+
+To enable observability with Arize Phoenix (free hosted version):
+
+1. **Sign up** at [https://app.phoenix.arize.com](https://app.phoenix.arize.com)
+2. **Get your API key** from the Phoenix dashboard
+3. **Add to your `.env` file**:
+   ```bash
+   PHOENIX_API_KEY=your_phoenix_api_key_here
+   ```
+
+With Phoenix enabled, you'll get:
+- 📊 Real-time monitoring of your AI agents
+- 🔍 Detailed traces of CrewAI execution
+- 📈 Performance metrics and debugging insights
+- 🎯 LLM call tracking and analysis
 
 ## Running the Project
 
-To kickstart your flow and begin execution, run this from the root folder of your project:
+To create a guide, run:
 
 ```bash
 crewai run
 ```
 
-This command initializes the guide_creator_flow Flow as defined in your configuration.
+The program will ask for:
+1. **Topic**: What you want to create a guide about
+2. **Audience Level**: beginner, intermediate, or advanced
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+**Note**: You may not see your typing in the terminal, but your input is being recorded. Just type your answer and press Enter.
 
-## Understanding Your Crew
+## Output
 
-The guide_creator_flow Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+The system generates:
+- `output/guide_outline.json` - The structured outline
+- `output/complete_guide.md` - Your complete guide in clean markdown format
+
+## Project Structure
+
+```
+guide_creator_flow/
+├── src/guide_creator_flow/
+│   ├── main.py                 # Main flow logic
+│   ├── phoenix_config.py       # Phoenix observability setup
+│   └── crews/content_crew/     # CrewAI agents and tasks
+├── output/                     # Generated guides
+└── README.md
+```
+
+## Observability Dashboard
+
+When Phoenix is enabled, visit [https://app.phoenix.arize.com](https://app.phoenix.arize.com) to see:
+- Agent execution traces
+- LLM performance metrics
+- Content generation pipeline analysis
+- Error tracking and debugging
 
 ## Support
 
-For support, questions, or feedback regarding the {{crew_name}} Crew or crewAI.
+For support, questions, or feedback:
 
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+- Visit [CrewAI documentation](https://docs.crewai.com)
+- Check [Arize Phoenix docs](https://docs.arize.com/phoenix)
+- [CrewAI GitHub repository](https://github.com/joaomdmoura/crewai)
 
-Let's create wonders together with the power and simplicity of crewAI.
+Let's create comprehensive guides with the power of AI and observability!
