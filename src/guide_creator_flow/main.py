@@ -22,6 +22,31 @@ except ImportError:
                     key, value = line.strip().split('=', 1)
                     os.environ[key] = value
 
+def create_filename(topic: str, audience: str, extension: str = "md") -> str:
+    """
+    Create a safe filename based on topic and audience.
+    
+    Args:
+        topic: The guide topic
+        audience: The target audience level
+        extension: File extension (default: md)
+        
+    Returns:
+        A safe filename string
+    """
+    # Clean the topic string for filename use
+    safe_topic = re.sub(r'[^\w\s-]', '', topic.lower())  # Remove special chars
+    safe_topic = re.sub(r'[-\s]+', '-', safe_topic)      # Replace spaces/hyphens with single hyphen
+    safe_topic = safe_topic.strip('-')                    # Remove leading/trailing hyphens
+    
+    # Limit length to avoid filesystem issues
+    if len(safe_topic) > 50:
+        safe_topic = safe_topic[:50].rstrip('-')
+    
+    # Create filename
+    filename = f"{safe_topic}-{audience}-guide.{extension}"
+    return filename
+
 # Define our models for structured data
 class Section(BaseModel):
     title: str = Field(description="Title of the section")
@@ -144,11 +169,16 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
         # Ensure output directory exists before saving
         os.makedirs("output", exist_ok=True)
 
-        # Save the outline to a file
-        with open("output/guide_outline.json", "w") as f:
+        # Create dynamic filename for outline
+        outline_filename = create_filename(state.topic, state.audience_level, "json")
+        outline_path = f"output/{outline_filename.replace('-guide.json', '-outline.json')}"
+
+        # Save the outline to a file with dynamic name
+        with open(outline_path, "w") as f:
             json.dump(outline_dict, f, indent=2)
 
         print(f"Guide outline created with {len(self.state.guide_outline.sections)} sections")
+        print(f"Outline saved to: {outline_path}")
         return self.state.guide_outline
 
     @listen(create_guide_outline)
@@ -198,12 +228,16 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
         # Add conclusion
         guide_content += f"## Conclusion\n\n{outline.conclusion}\n\n"
 
-        # Save the guide
-        with open("output/complete_guide.md", "w") as f:
+        # Create dynamic filename for the guide
+        guide_filename = create_filename(self.state.topic, self.state.audience_level)
+        guide_path = f"output/{guide_filename}"
+
+        # Save the guide with dynamic filename
+        with open(guide_path, "w") as f:
             f.write(guide_content)
 
-        print("\nComplete guide compiled and saved to output/complete_guide.md")
-        return "Guide creation completed successfully"
+        print(f"\nComplete guide compiled and saved to {guide_path}")
+        return f"Guide creation completed successfully. File saved as: {guide_path}"
 
 def kickoff():
     """Run the guide creator flow"""
@@ -211,10 +245,9 @@ def kickoff():
     phoenix_enabled = setup_phoenix_observability()
     
     try:
-        GuideCreatorFlow().kickoff()
+        result = GuideCreatorFlow().kickoff()
         print("\n=== Flow Complete ===")
         print("Your comprehensive guide is ready in the output directory.")
-        print("Open output/complete_guide.md to view it.")
         
         if phoenix_enabled:
             print("\n🔍 Check your Phoenix dashboard for observability data:")
