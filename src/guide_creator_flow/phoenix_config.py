@@ -1,20 +1,23 @@
 """
-Phoenix observability configuration for CrewAI
+Phoenix observability configuration for CrewAI and OpenAI
 
 This module provides functions to set up and manage Arize Phoenix observability
-for CrewAI flows, enabling real-time monitoring and debugging of AI agents.
+for CrewAI flows and OpenAI calls, enabling real-time monitoring of AI agents,
+token usage, costs, and performance metrics.
 """
 import os
 
 from phoenix.otel import register
 from openinference.instrumentation.crewai import CrewAIInstrumentor
+from openinference.instrumentation.openai import OpenAIInstrumentor
 
 
 def setup_phoenix_observability() -> bool:
     """
-    Setup Phoenix observability for CrewAI.
+    Setup Phoenix observability for CrewAI and OpenAI.
     
-    Configures and initializes Phoenix tracing for monitoring CrewAI flows.
+    Configures and initializes Phoenix tracing for monitoring CrewAI flows
+    and OpenAI API calls, including token usage, costs, and performance metrics.
     Requires PHOENIX_API_KEY environment variable to be set.
     
     Returns:
@@ -46,12 +49,16 @@ def setup_phoenix_observability() -> bool:
             headers={"api_key": phoenix_api_key}  # Phoenix Cloud uses api_key header, not Bearer
         )
         
-        # Instrument CrewAI
+        # Instrument CrewAI for agent workflow tracking
         CrewAIInstrumentor().instrument(tracer_provider=tracer_provider)
+        
+        # Instrument OpenAI for token usage, cost, and performance tracking
+        OpenAIInstrumentor().instrument(tracer_provider=tracer_provider)
         
         print("✅ Phoenix observability enabled!")
         print(f"   Project: {project_name}")
         print(f"   Endpoint: {phoenix_endpoint}")
+        print("   📊 Tracking: CrewAI workflows + OpenAI token usage & costs")
         return True
         
     except Exception as e:
@@ -65,11 +72,12 @@ def cleanup_phoenix() -> None:
     """
     Cleanup Phoenix instrumentation.
     
-    Uninstruments CrewAI to clean up Phoenix tracing resources.
+    Uninstruments both CrewAI and OpenAI to clean up Phoenix tracing resources.
     Should be called when the application is shutting down.
     """
     try:
         CrewAIInstrumentor().uninstrument()
-        print("🧹 Phoenix observability cleaned up")
+        OpenAIInstrumentor().uninstrument()
+        print("🧹 Phoenix observability cleaned up (CrewAI + OpenAI)")
     except Exception as e:
         print(f"⚠️  Error cleaning up Phoenix: {e}") 

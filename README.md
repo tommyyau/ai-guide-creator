@@ -77,10 +77,13 @@ To enable real-time monitoring with Arize Phoenix:
    ```
 
 With Phoenix enabled, you'll get:
-- 📊 Real-time monitoring of your AI agents
-- 🔍 Detailed traces of CrewAI execution
-- 📈 Performance metrics and debugging insights
-- 🎯 LLM call tracking and analysis
+- 📊 Real-time monitoring of your AI agents and workflows
+- 🔍 Detailed traces of CrewAI execution and agent collaboration
+- 💰 **Token usage and cost tracking** for all OpenAI API calls
+- ⏱️ **Performance metrics** including latency and response times
+- 📈 Performance trends and debugging insights
+- 🎯 **Complete LLM call visibility** with input/output token counts
+- 🚨 Error tracking and alert capabilities
 
 ## 📖 Usage
 
@@ -151,11 +154,14 @@ python tests/test_phoenix.py
 
 When Phoenix is enabled, visit [https://app.phoenix.arize.com](https://app.phoenix.arize.com) to see:
 
-- **Agent Execution Traces**: How your AI agents collaborate
-- **LLM Performance Metrics**: Token usage, response times, costs
-- **Content Generation Pipeline**: Step-by-step process analysis
-- **Error Tracking**: Debug issues when they occur
-- **Performance Optimization**: Identify bottlenecks
+- **Agent Execution Traces**: How your AI agents collaborate step-by-step
+- **Token Usage Metrics**: Real-time input/output token counts for each LLM call
+- **Cost Tracking**: Detailed cost breakdown per section and total guide generation
+- **Performance Analytics**: Response times, latency trends, and throughput metrics
+- **Content Generation Pipeline**: Complete workflow visibility from outline to final guide
+- **Error Tracking & Debugging**: Identify and debug issues when they occur
+- **Scalability Insights**: Monitor how performance changes with guide complexity
+- **Usage Patterns**: Track which topics/audiences require more resources
 
 ## 🛠️ Development
 

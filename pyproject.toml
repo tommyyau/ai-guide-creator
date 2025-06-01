@@ -23,6 +23,7 @@ dependencies = [
     "arize-phoenix>=10.5.0",
     "crewai[tools]>=0.121.1,<1.0.0",
     "openinference-instrumentation-crewai>=0.1.10",
+    "openinference-instrumentation-openai>=0.1.0,<=0.1.30",
     "python-dotenv>=1.0.0",
 ]
 
