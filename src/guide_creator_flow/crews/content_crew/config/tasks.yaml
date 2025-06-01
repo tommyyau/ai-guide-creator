@@ -7,15 +7,6 @@ write_section_task:
     Section description: {section_description}
     Target audience: {audience_level} level learners
 
-    IMPORTANT FORMATTING REQUIREMENTS:
-    - Start with a level 2 heading (##) for the main section title
-    - Use level 3 headings (###) for major subsections
-    - Use level 4 headings (####) for minor subsections
-    - Use **bold text** for emphasis instead of creating headings for small elements like "Example:", "Tips:", etc.
-    - Do NOT wrap your content in markdown code blocks (```markdown)
-    - Do NOT include meta-comments about the content quality or editing process
-    - Write the content directly as clean markdown
-
     Your content should:
     1. Begin with a brief introduction to the section topic
     2. Explain all key concepts clearly with examples
@@ -23,14 +14,16 @@ write_section_task:
     4. End with a summary of key points
     5. Be approximately 500-800 words in length
 
+    Format your content in Markdown with appropriate headings, lists, and emphasis.
+
     Previously written sections:
     {previous_sections}
 
     Make sure your content maintains consistency with previously written sections
     and builds upon concepts that have already been explained.
   expected_output: >
-    Clean, well-structured markdown content starting with ## {section_title} and containing
-    no meta-comments, no code block wrappers, and proper heading hierarchy.
+    A well-structured, comprehensive section in Markdown format that thoroughly
+    explains the topic and is appropriate for the target audience.
   agent: content_writer
 
 review_section_task:
@@ -44,14 +37,6 @@ review_section_task:
     Previously written sections:
     {previous_sections}
 
-    IMPORTANT FORMATTING REQUIREMENTS:
-    - Maintain the level 2 heading (##) for the main section title
-    - Keep proper heading hierarchy (### for major subsections, #### for minor ones)
-    - Use **bold text** for emphasis instead of creating headings for small elements
-    - Do NOT wrap your content in markdown code blocks (```markdown)
-    - Do NOT include meta-comments about your review process
-    - Return only the clean, improved markdown content
-
     Your review should:
     1. Fix any grammatical or spelling errors
     2. Improve clarity and readability
@@ -60,10 +45,10 @@ review_section_task:
     5. Enhance the structure and flow
     6. Add any missing key information
 
-    Provide ONLY the improved markdown content with no additional commentary.
+    Provide the improved version of the section in Markdown format.
   expected_output: >
-    Clean, improved markdown content with proper heading hierarchy and no meta-comments
-    or code block wrappers.
+    An improved, polished version of the section that maintains the original
+    structure but enhances clarity, accuracy, and consistency.
   agent: content_reviewer
   context:
     - write_section_task

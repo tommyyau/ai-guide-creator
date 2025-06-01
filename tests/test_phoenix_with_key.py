@@ -5,10 +5,13 @@ Test Phoenix configuration with a simulated API key
 import os
 import sys
 
+# Add the src directory to the path so we can import our modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
 # Simulate having an API key for testing
 os.environ["PHOENIX_API_KEY"] = "test_key_12345"
 
-from src.guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
+from guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
 
 def test_phoenix_with_key():
     """Test Phoenix setup with simulated API key"""

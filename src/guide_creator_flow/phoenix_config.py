@@ -1,13 +1,30 @@
 """
 Phoenix observability configuration for CrewAI
+
+This module provides functions to set up and manage Arize Phoenix observability
+for CrewAI flows, enabling real-time monitoring and debugging of AI agents.
 """
 import os
+
 from phoenix.otel import register
 from openinference.instrumentation.crewai import CrewAIInstrumentor
 
-def setup_phoenix_observability():
-    """Setup Phoenix observability for CrewAI"""
+
+def setup_phoenix_observability() -> bool:
+    """
+    Setup Phoenix observability for CrewAI.
     
+    Configures and initializes Phoenix tracing for monitoring CrewAI flows.
+    Requires PHOENIX_API_KEY environment variable to be set.
+    
+    Returns:
+        bool: True if Phoenix was successfully configured, False otherwise.
+        
+    Environment Variables:
+        PHOENIX_API_KEY: Required API key from Phoenix Cloud
+        PHOENIX_COLLECTOR_ENDPOINT: Optional custom endpoint (defaults to Phoenix Cloud)
+        PHOENIX_PROJECT_NAME: Optional project name (defaults to 'ai-guide-creator')
+    """
     phoenix_api_key = os.getenv("PHOENIX_API_KEY")
     
     if not phoenix_api_key:
@@ -43,8 +60,14 @@ def setup_phoenix_observability():
         print("   The program will continue without observability.")
         return False
 
-def cleanup_phoenix():
-    """Cleanup Phoenix instrumentation"""
+
+def cleanup_phoenix() -> None:
+    """
+    Cleanup Phoenix instrumentation.
+    
+    Uninstruments CrewAI to clean up Phoenix tracing resources.
+    Should be called when the application is shutting down.
+    """
     try:
         CrewAIInstrumentor().uninstrument()
         print("🧹 Phoenix observability cleaned up")

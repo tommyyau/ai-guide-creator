@@ -3,18 +3,25 @@
 Simple test script to verify Phoenix configuration
 """
 import os
-from src.guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
+import sys
+
+# Add the src directory to the path so we can import our modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
 
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    # Load from parent directory where .env file is located
+    load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
     print("📁 Loaded environment variables from .env file")
 except ImportError:
     print("⚠️  python-dotenv not installed, trying to load .env manually...")
     # Manual .env loading as fallback
-    if os.path.exists('.env'):
-        with open('.env', 'r') as f:
+    env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
             for line in f:
                 if line.strip() and not line.startswith('#') and '=' in line:
                     key, value = line.strip().split('=', 1)
