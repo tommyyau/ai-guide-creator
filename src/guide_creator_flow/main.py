@@ -9,6 +9,19 @@ from crewai.flow.flow import Flow, listen, start
 from guide_creator_flow.crews.content_crew.content_crew import ContentCrew
 from guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Manual .env loading as fallback
+    if os.path.exists('.env'):
+        with open('.env', 'r') as f:
+            for line in f:
+                if line.strip() and not line.startswith('#') and '=' in line:
+                    key, value = line.strip().split('=', 1)
+                    os.environ[key] = value
+
 # Define our models for structured data
 class Section(BaseModel):
     title: str = Field(description="Title of the section")
