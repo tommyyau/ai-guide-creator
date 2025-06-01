@@ -38,7 +38,13 @@ Thumbs.db
 
 # Project specific
 output/
+logs/
 *.log
+
+# Tracking and monitoring files
+*_metrics.json
+*_cost_estimate.json
+monitor_*.log
 
 # Environment variables
 .env

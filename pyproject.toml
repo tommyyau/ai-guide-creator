@@ -38,6 +38,7 @@ dev = [
 [project.scripts]
 guide-creator = "guide_creator_flow.main:kickoff"
 kickoff = "guide_creator_flow.main:kickoff"
+run_crew = "guide_creator_flow.main:kickoff"
 plot = "guide_creator_flow.main:plot"
 
 [project.urls]

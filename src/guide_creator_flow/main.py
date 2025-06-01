@@ -8,6 +8,12 @@ from crewai import LLM
 from crewai.flow.flow import Flow, listen, start
 from guide_creator_flow.crews.content_crew.content_crew import ContentCrew
 from guide_creator_flow.phoenix_config import setup_phoenix_observability, cleanup_phoenix
+from guide_creator_flow.tools.tracking_tools import (
+    setup_detailed_logging, 
+    PerformanceTracker, 
+    TokenCostEstimator, 
+    DetailedProgressTracker
+)
 
 # Load environment variables from .env file
 try:
@@ -116,28 +122,46 @@ def clean_section_content(content: str) -> str:
 class GuideCreatorFlow(Flow[GuideCreatorState]):
     """Flow for creating a comprehensive guide on any topic"""
 
+    def __init__(self):
+        super().__init__()
+        # Initialize tracking tools
+        self.logger = setup_detailed_logging()
+        self.performance_tracker = PerformanceTracker()
+        self.cost_estimator = TokenCostEstimator()
+        self.progress_tracker = None  # Will be initialized when we know section count
+
     @start()
     def get_user_input(self):
         """Get input from the user about the guide topic and audience"""
+        self.performance_tracker.start_step("User Input Collection")
+        self.logger.info("Starting user input collection")
+        
         print("\n=== Create Your Comprehensive Guide ===\n")
 
         # Get user input
         self.state.topic = input("What topic would you like to create a guide for? ")
+        self.logger.info(f"Topic selected: {self.state.topic}")
 
         # Get audience level with validation
         while True:
             audience = input("Who is your target audience? (beginner/intermediate/advanced) ").lower()
             if audience in ["beginner", "intermediate", "advanced"]:
                 self.state.audience_level = audience
+                self.logger.info(f"Audience level selected: {audience}")
                 break
             print("Please enter 'beginner', 'intermediate', or 'advanced'")
 
         print(f"\nCreating a guide on {self.state.topic} for {self.state.audience_level} audience...\n")
+        
+        self.performance_tracker.end_step("User Input Collection")
         return self.state
 
     @listen(get_user_input)
     def create_guide_outline(self, state):
         """Create a structured outline for the guide using a direct LLM call"""
+        self.performance_tracker.start_step("Guide Outline Creation", f"Topic: {state.topic}")
+        self.logger.info(f"Creating outline for topic: {state.topic}")
+        
         print("Creating guide outline...")
 
         # Initialize the LLM
@@ -159,12 +183,21 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
             """}
         ]
 
+        # Estimate cost for outline generation
+        input_text = " ".join([msg["content"] for msg in messages])
+        
         # Make the LLM call with JSON response format
         response = llm.call(messages=messages)
+
+        # Estimate cost
+        self.cost_estimator.estimate_call_cost("gpt-4o-mini", input_text, response)
 
         # Parse the JSON response
         outline_dict = json.loads(response)
         self.state.guide_outline = GuideOutline(**outline_dict)
+        
+        # Initialize progress tracker now that we know section count
+        self.progress_tracker = DetailedProgressTracker(len(self.state.guide_outline.sections))
 
         # Ensure output directory exists before saving
         os.makedirs("output", exist_ok=True)
@@ -179,17 +212,28 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
 
         print(f"Guide outline created with {len(self.state.guide_outline.sections)} sections")
         print(f"Outline saved to: {outline_path}")
+        
+        self.logger.info(f"Outline created with {len(self.state.guide_outline.sections)} sections")
+        self.logger.info(f"Sections: {[s.title for s in self.state.guide_outline.sections]}")
+        
+        self.performance_tracker.end_step("Guide Outline Creation", len(response))
         return self.state.guide_outline
 
     @listen(create_guide_outline)
     def write_and_compile_guide(self, outline):
         """Write all sections and compile the guide"""
+        self.performance_tracker.start_step("Content Generation and Compilation")
+        self.logger.info("Starting content generation for all sections")
+        
         print("Writing guide sections and compiling...")
         completed_sections = []
 
         # Process sections one by one to maintain context flow
         for section in outline.sections:
-            print(f"Processing section: {section.title}")
+            self.progress_tracker.start_section(section.title)
+            section_start_time = self.performance_tracker.current_step_start
+            
+            self.logger.info(f"Processing section: {section.title}")
 
             # Build context from previous sections
             previous_sections_text = ""
@@ -201,22 +245,42 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
             else:
                 previous_sections_text = "No previous sections written yet."
 
+            self.progress_tracker.update_section_progress("Preparing content creation crew")
+
             # Run the content crew for this section
-            result = ContentCrew().crew().kickoff(inputs={
+            crew_inputs = {
                 "section_title": section.title,
                 "section_description": section.description,
                 "audience_level": self.state.audience_level,
                 "previous_sections": previous_sections_text,
                 "draft_content": ""
-            })
+            }
+            
+            # Estimate cost for this section
+            input_text = f"{section.title} {section.description} {previous_sections_text}"
+            
+            self.progress_tracker.update_section_progress("Running content writer agent")
+            result = ContentCrew().crew().kickoff(inputs=crew_inputs)
+            
+            # Estimate cost (approximate - we don't have exact output yet)
+            self.cost_estimator.estimate_call_cost("gpt-4o", input_text, result.raw)
 
             # Clean the content before storing
             cleaned_content = clean_section_content(result.raw)
             self.state.sections_content[section.title] = cleaned_content
             completed_sections.append(section.title)
-            print(f"Section completed: {section.title}")
+            
+            # Calculate word count
+            word_count = len(cleaned_content.split())
+            
+            self.progress_tracker.complete_section(word_count)
+            self.logger.info(f"Section '{section.title}' completed with {word_count} words")
 
         # Compile the final guide
+        print(f"\n{'='*60}")
+        print("📚 COMPILING FINAL GUIDE")
+        print(f"{'='*60}")
+        
         guide_content = f"# {outline.title}\n\n"
         guide_content += f"## Introduction\n\n{outline.introduction}\n\n"
 
@@ -236,7 +300,26 @@ class GuideCreatorFlow(Flow[GuideCreatorState]):
         with open(guide_path, "w") as f:
             f.write(guide_content)
 
-        print(f"\nComplete guide compiled and saved to {guide_path}")
+        # Save performance metrics
+        timestamp = guide_filename.replace('.md', '')
+        self.performance_tracker.save_metrics(f"{timestamp}_metrics.json")
+        
+        # Save cost estimates
+        cost_data = self.cost_estimator.get_total_estimate()
+        with open(f"logs/{timestamp}_cost_estimate.json", 'w') as f:
+            json.dump(cost_data, f, indent=2)
+
+        total_words = len(guide_content.split())
+        print(f"\n✅ Complete guide compiled!")
+        print(f"📄 File saved: {guide_path}")
+        print(f"📊 Total words: {total_words}")
+        print(f"💰 Estimated total cost: ${cost_data['total_estimated_cost']:.4f}")
+        print(f"🔄 Total API calls: {cost_data['total_api_calls']}")
+        
+        self.logger.info(f"Guide compilation completed. Total words: {total_words}")
+        self.logger.info(f"Final guide saved to: {guide_path}")
+        
+        self.performance_tracker.end_step("Content Generation and Compilation", len(guide_content))
         return f"Guide creation completed successfully. File saved as: {guide_path}"
 
 def kickoff():
@@ -248,6 +331,7 @@ def kickoff():
         result = GuideCreatorFlow().kickoff()
         print("\n=== Flow Complete ===")
         print("Your comprehensive guide is ready in the output directory.")
+        print("📁 Check the 'logs' directory for detailed tracking data!")
         
         if phoenix_enabled:
             print("\n🔍 Check your Phoenix dashboard for observability data:")
